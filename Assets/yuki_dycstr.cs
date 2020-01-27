@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+
 ///1つ1つのノードクラス
 public class DijkstraNode
 {
@@ -14,7 +15,7 @@ public class DijkstraNode
         Completed   // 確定状態
     }
 
-    public double Distance = 1.0;             // 距離
+    public double Distance = 1.0;       // 距離
     public DijkstraNode SourceNode;     // ソースノード
     public NodeStatus Status;           // 状態
     public int X;                       // ノード位置X
@@ -69,13 +70,15 @@ public class Dijkstra: MonoBehaviour
     /// コンストラクタ
     /// nNodeCount => 全ノード数
     /// class Dijkstrの初期化関数
-    public Dijkstra(int nNodeCount)
+    public Dijkstra()
     {
         _nodes = new List<DijkstraNode>();
-        for (int i = 0; i < nNodeCount; i++)
+        for (int i = 0; i < 16; i++)      //////ここにnodeの個数を入れる
         {
-            var c = new DijkstraNode();
-            c.nodeNumber = i;
+            var c = new DijkstraNode
+            {
+                nodeNumber = i
+            };
             _nodes.Add(c);
         }
     }
@@ -83,9 +86,9 @@ public class Dijkstra: MonoBehaviour
     /// 最短経路計算実行
     /// nStart => スタートノードのインデックス
     /// nCount => 検索回数
-    public DijkstraNode Execute(DijkstraNode startNode, DijkstraNode goalNode)
+    public IEnumerator Execute(DijkstraNode startNode, DijkstraNode goalNode, Action<DijkstraNode> ReturnFunction)
     {
-        if (startNode == null) return null;
+        if (startNode == null) yield return null;
 
         // 全節点で距離を無限大，未確定とする
         foreach (DijkstraNode node in _nodes)
@@ -100,22 +103,62 @@ public class Dijkstra: MonoBehaviour
         startNode.Status = DijkstraNode.NodeStatus.Completed;
         startNode.SourceNode = null;
 
-        DijkstraNode scanNode = startNode;
-        while (scanNode != null)
+        DijkstraNode sourceNode = startNode;
+        while (sourceNode != null)
         {
-            UpdateNodeProp(scanNode);       // 隣接点のノードを更新
-            scanNode = FindMinNode();       // 最短経路をもつノードを検索
+            //UpdateNodeProp(scanNode);       // 隣接点のノードを更新
 
-            if (scanNode.nodeNumber == goalNode.nodeNumber)
+            if (_branches == null) continue;
+
+            DijkstraNode destinationNode;
+            double dTotalDistance;
+
+            // ブランチリストの中から指定ノードに関連しているものを検索
+            foreach (DijkstraBranch branch in _branches)
+            {
+
+
+                destinationNode = null;
+                if (branch.Node1.Equals(sourceNode) == true)
+                {
+                    destinationNode = branch.Node2;
+                }
+                else if (branch.Node2.Equals(sourceNode) == true)
+                {
+                    destinationNode = branch.Node1;
+                }
+                else
+                {
+                    continue;
+                }
+                // 確定しているノードは無視。
+                if (destinationNode.Status == DijkstraNode.NodeStatus.Completed) continue;
+                // 隣接ノードを見つけた。
+                print("検索Node:" + destinationNode.nodeNumber);
+                yield return new WaitForSeconds(1);
+
+                // ノードの現在の距離に枝の距離を加える。
+                dTotalDistance = sourceNode.Distance + branch.Distance;
+
+                if (destinationNode.Distance <= dTotalDistance) continue;
+
+                // 現在の仮の最短距離よりもっと短い行き方を見つけた。
+                destinationNode.Distance = dTotalDistance;  // 仮の最短距離
+                destinationNode.SourceNode = sourceNode;
+                destinationNode.Status = DijkstraNode.NodeStatus.Temporary;
+            }
+
+            sourceNode = FindMinNode();       // 最短経路をもつノードを検索
+            //yield return new WaitForSeconds(1);
+            if (sourceNode.nodeNumber == goalNode.nodeNumber)
             {
                 print("goalしました");
                 break;
             }
         }
-        return scanNode;
+
+        ReturnFunction(sourceNode);
     }
-
-
 
     /// 指定ノードに隣接するノードの最短距離を計算する
     /// 関数で使う関数
@@ -143,10 +186,10 @@ public class Dijkstra: MonoBehaviour
             {
                 continue;
             }
-            // 隣接ノードを見つけた。
-
             // 確定しているノードは無視。
             if (destinationNode.Status == DijkstraNode.NodeStatus.Completed) continue;
+            // 隣接ノードを見つけた。
+            print("検索Node:" + destinationNode.nodeNumber);
 
             // ノードの現在の距離に枝の距離を加える。
             dTotalDistance = sourceNode.Distance + branch.Distance;
@@ -192,8 +235,6 @@ public class Dijkstra: MonoBehaviour
 }
 
 public class yuki_dycstr : MonoBehaviour {
-
-    public int count = 16;
     // info[0][1] == 0
     public int[][] info = {
         new int[]{ 0, 1 },
@@ -222,9 +263,10 @@ public class yuki_dycstr : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        //初期化
-        dijkstra = new Dijkstra(count);
+        //初期
+        dijkstra = gameObject.AddComponent<Dijkstra>();
         branches = new List<DijkstraBranch>();
+
         foreach (int[] bond in info)
         {
             branches.Add(new DijkstraBranch(dijkstra.Nodes[bond[0]], dijkstra.Nodes[bond[1]]));
@@ -233,14 +275,13 @@ public class yuki_dycstr : MonoBehaviour {
         //breanch入れていく
         dijkstra.Branches = branches;
 
-        answerNode = dijkstra.Execute(dijkstra.Nodes[0], dijkstra.Nodes[12]);
+        StartCoroutine(dijkstra.Execute(dijkstra.Nodes[0], dijkstra.Nodes[12], r => answerNode = r)); 
 
     }
 	
 	// Update is called once per frame
 	void Update () {
-        
-        if (answerNode != null)
+        while (answerNode != null)
         {
             print(answerNode.nodeNumber);
             answerNode = answerNode.SourceNode;

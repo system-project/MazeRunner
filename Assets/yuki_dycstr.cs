@@ -89,6 +89,8 @@ public class Dijkstra: MonoBehaviour
     public IEnumerator Execute(DijkstraNode startNode, DijkstraNode goalNode, Action<DijkstraNode> ReturnFunction)
     {
         if (startNode == null) yield return null;
+        Color water = new Color(0.1f, 1f, 1f);
+        Color black = new Color(0.1f, 0.1f, 0.1f);
 
         // 全節点で距離を無限大，未確定とする
         foreach (DijkstraNode node in _nodes)
@@ -113,12 +115,20 @@ public class Dijkstra: MonoBehaviour
             DijkstraNode destinationNode;
             double dTotalDistance;
 
+            int preNodeNumber = 0;
+
             // ブランチリストの中から指定ノードに関連しているものを検索
             foreach (DijkstraBranch branch in _branches)
             {
-
+                if (preNodeNumber != -1)
+                {
+                    GameObject blockSourse = GameObject.Find(sourceNode.nodeNumber.ToString());
+                    blockSourse.GetComponent<Renderer>().material.SetColor("_Color", black);
+                    preNodeNumber = -1;
+                }
 
                 destinationNode = null;
+
                 if (branch.Node1.Equals(sourceNode) == true)
                 {
                     destinationNode = branch.Node2;
@@ -132,15 +142,23 @@ public class Dijkstra: MonoBehaviour
                     continue;
                 }
                 // 確定しているノードは無視。
-                if (destinationNode.Status == DijkstraNode.NodeStatus.Completed) continue;
+                if (destinationNode.Status == DijkstraNode.NodeStatus.Completed)
+                {
+                    continue;
+                }
                 // 隣接ノードを見つけた。
                 print("検索Node:" + destinationNode.nodeNumber);
+
+                GameObject block = GameObject.Find(destinationNode.nodeNumber.ToString());
+                block.GetComponent<Renderer>().material.SetColor("_Color", water);
+
                 yield return new WaitForSeconds(1);
 
                 // ノードの現在の距離に枝の距離を加える。
                 dTotalDistance = sourceNode.Distance + branch.Distance;
 
                 if (destinationNode.Distance <= dTotalDistance) continue;
+                preNodeNumber = destinationNode.nodeNumber;
 
                 // 現在の仮の最短距離よりもっと短い行き方を見つけた。
                 destinationNode.Distance = dTotalDistance;  // 仮の最短距離
@@ -149,7 +167,7 @@ public class Dijkstra: MonoBehaviour
             }
 
             sourceNode = FindMinNode();       // 最短経路をもつノードを検索
-            //yield return new WaitForSeconds(1);
+
             if (sourceNode.nodeNumber == goalNode.nodeNumber)
             {
                 print("goalしました");
@@ -278,14 +296,30 @@ public class yuki_dycstr : MonoBehaviour {
         StartCoroutine(dijkstra.Execute(dijkstra.Nodes[0], dijkstra.Nodes[12], r => answerNode = r)); 
 
     }
-	
-	// Update is called once per frame
-	void Update () {
+    int[] numbers = new int[1];
+    bool flag = false;
+
+    // Update is called once per frame
+    void Update () {
         while (answerNode != null)
         {
-            print(answerNode.nodeNumber);
+            flag = true;
+            Array.Resize(ref numbers, numbers.Length + 1);
+            numbers[numbers.Length - 1] = answerNode.nodeNumber;
             answerNode = answerNode.SourceNode;
         }
+
+        if (flag)
+        {
+            foreach (int number in numbers)
+            {
+                Debug.Log(numbers);
+                GameObject block = GameObject.Find(number.ToString());
+                block.GetComponent<Renderer>().material.SetColor("_Color", new Color(1.0f, 0.0f, 0.0f));
+            }
+
+        }
+
     }
 
 }

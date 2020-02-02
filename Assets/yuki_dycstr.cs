@@ -310,7 +310,6 @@ public class yuki_dycstr : MonoBehaviour {
         {
             foreach (int number in numbers)
             {
-                Debug.Log(numbers);
                 GameObject block = GameObject.Find(number.ToString());
                 block.GetComponent<Renderer>().material.SetColor("_Color", new Color(1.0f, 0.0f, 0.0f));
             }

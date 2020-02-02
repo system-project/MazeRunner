@@ -30,8 +30,10 @@ public class Yuki_mazeCreate : MonoBehaviour {
         new int[]{ 15, 11 }
     };
 
+    public List<GameObject> list = new List<GameObject>();
+
     void Awake () {
-		Color black = new Color(0.1f, 0.1f, 0.1f);
+		Color black = new Color(0, 0, 0);
 
         var list = new List<GameObject>();
 

@@ -106,6 +106,11 @@ public class Dijkstra: MonoBehaviour
         startNode.SourceNode = null;
 
         DijkstraNode sourceNode = startNode;
+        GameObject startBlock = GameObject.Find(startNode.nodeNumber.ToString());
+        startBlock.GetComponent<Renderer>().material.SetColor("_Color", water);
+
+        yield return new WaitForSeconds(1);
+
         while (sourceNode != null)
         {
             //UpdateNodeProp(scanNode);       // 隣接点のノードを更新
@@ -115,17 +120,10 @@ public class Dijkstra: MonoBehaviour
             DijkstraNode destinationNode;
             double dTotalDistance;
 
-            int preNodeNumber = 0;
 
             // ブランチリストの中から指定ノードに関連しているものを検索
             foreach (DijkstraBranch branch in _branches)
             {
-                if (preNodeNumber != -1)
-                {
-                    GameObject blockSourse = GameObject.Find(sourceNode.nodeNumber.ToString());
-                    blockSourse.GetComponent<Renderer>().material.SetColor("_Color", black);
-                    preNodeNumber = -1;
-                }
 
                 destinationNode = null;
 
@@ -158,7 +156,6 @@ public class Dijkstra: MonoBehaviour
                 dTotalDistance = sourceNode.Distance + branch.Distance;
 
                 if (destinationNode.Distance <= dTotalDistance) continue;
-                preNodeNumber = destinationNode.nodeNumber;
 
                 // 現在の仮の最短距離よりもっと短い行き方を見つけた。
                 destinationNode.Distance = dTotalDistance;  // 仮の最短距離

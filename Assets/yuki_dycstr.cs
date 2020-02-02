@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 
 
+
 ///1つ1つのノードクラス
 public class DijkstraNode
 {
@@ -72,8 +73,9 @@ public class Dijkstra: MonoBehaviour
     /// class Dijkstrの初期化関数
     public Dijkstra()
     {
+        int count = 8;
         _nodes = new List<DijkstraNode>();
-        for (int i = 0; i < 16; i++)      //////ここにnodeの個数を入れる
+        for (int i = 0; i < count*count; i++)      //////ここにnodeの個数を入れる
         {
             var c = new DijkstraNode
             {
@@ -109,7 +111,7 @@ public class Dijkstra: MonoBehaviour
         GameObject startBlock = GameObject.Find(startNode.nodeNumber.ToString());
         startBlock.GetComponent<Renderer>().material.SetColor("_Color", water);
 
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
 
         while (sourceNode != null)
         {
@@ -145,12 +147,12 @@ public class Dijkstra: MonoBehaviour
                     continue;
                 }
                 // 隣接ノードを見つけた。
-                print("検索Node:" + destinationNode.nodeNumber);
+                //print("検索Node:" + destinationNode.nodeNumber);
 
                 GameObject block = GameObject.Find(destinationNode.nodeNumber.ToString());
                 block.GetComponent<Renderer>().material.SetColor("_Color", water);
 
-                yield return new WaitForSeconds(1);
+                yield return new WaitForSeconds(0.5f);
 
                 // ノードの現在の距離に枝の距離を加える。
                 dTotalDistance = sourceNode.Distance + branch.Distance;
@@ -251,34 +253,46 @@ public class Dijkstra: MonoBehaviour
 
 public class yuki_dycstr : MonoBehaviour {
     // info[0][1] == 0
-    public int[][] info = {
-        new int[]{ 0, 1 },
-        new int[]{ 1, 2 },
-        new int[]{ 2, 3 },
-        new int[]{ 2, 6 },
-        new int[]{ 1, 5 },
-        new int[]{ 4, 5 },
-        new int[]{ 5, 6 },
-        new int[]{ 5, 9 },
-        new int[]{ 6, 7 },
-        new int[]{ 4, 8 },
-        new int[]{ 8, 12 },
-        new int[]{ 6, 10 },
-        new int[]{ 9, 10 },
-        new int[]{ 10, 14 },
-        new int[]{ 12, 13 },
-        new int[]{ 13, 14 },
-        new int[]{ 14, 15 },
-        new int[]{ 15, 11 }
-    };
+    public int[][] info;
+    //= {
+    //    new int[]{ 0, 1 },
+    //    new int[]{ 1, 2 },
+    //    new int[]{ 2, 3 },
+    //    new int[]{ 2, 6 },
+    //    new int[]{ 1, 5 },
+    //    new int[]{ 4, 5 },
+    //    new int[]{ 5, 6 },
+    //    new int[]{ 5, 9 },
+    //    new int[]{ 6, 7 },
+    //    new int[]{ 4, 8 },
+    //    new int[]{ 8, 12 },
+    //    new int[]{ 6, 10 },
+    //    new int[]{ 9, 10 },
+    //    new int[]{ 10, 14 },
+    //    new int[]{ 12, 13 },
+    //    new int[]{ 13, 14 },
+    //    new int[]{ 14, 15 },
+    //    new int[]{ 15, 11 }
+    //};
 
     public Dijkstra dijkstra;
     public List<DijkstraBranch> branches;
     public DijkstraNode answerNode;
 
+    void Awake()
+    {
+        GameObject block = GameObject.Find("CreateMaze");
+        var script = block.GetComponent<Yuki_mazeCreate>();
+        info = script.information;
+    }
+
     // Use this for initialization
     void Start () {
         //初期
+        GameObject block = GameObject.Find("CreateMaze");
+        var script = block.GetComponent<Yuki_mazeCreate>();
+        info = script.information;
+
         dijkstra = gameObject.AddComponent<Dijkstra>();
         branches = new List<DijkstraBranch>();
 
@@ -289,8 +303,12 @@ public class yuki_dycstr : MonoBehaviour {
 
         //breanch入れていく
         dijkstra.Branches = branches;
+        int count = script.count;
 
-        StartCoroutine(dijkstra.Execute(dijkstra.Nodes[0], dijkstra.Nodes[12], r => answerNode = r)); 
+        int goalNum = (int)UnityEngine.Random.Range(1f, count * count-1);
+        print("start:0");
+        print("goal:"+goalNum);
+        StartCoroutine(dijkstra.Execute(dijkstra.Nodes[0], dijkstra.Nodes[goalNum], r => answerNode = r)); 
 
     }
     int[] numbers = new int[1];
